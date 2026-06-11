@@ -33,7 +33,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'daphne',
-    
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -141,3 +141,12 @@ AUTH_USER_MODEL = "users.User"
 
 # Daphne
 ASGI_APPLICATION = "pingout.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [{"host": "localhost", "port": 6379, "socket_timeout": 60}],
+        },
+    },
+}
