@@ -1,6 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("user-search");
     const resultsBox = document.getElementById("user-search-results");
+    const chatWelcome = document.getElementById("chat-welcome");
+    const chatBox = document.getElementById("chat-box");
+    const chatHeaderAvatar = document.getElementById("chat-header-avatar");
+    const chatHeaderName = document.getElementById("chat-header-name");
 
     if (!searchInput || !resultsBox) {
         return;
@@ -62,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             item.appendChild(avatar);
             item.appendChild(name);
+            item.addEventListener("click", () => openChat(user));
             resultsBox.appendChild(item);
         });
 
@@ -71,5 +76,23 @@ document.addEventListener("DOMContentLoaded", () => {
     function hideResults() {
         resultsBox.classList.remove("is-visible");
         resultsBox.innerHTML = "";
+    }
+
+    function openChat(user) {
+        hideResults();
+        searchInput.value = "";
+
+        if (!chatBox || !chatWelcome) {
+            return;
+        }
+
+        chatHeaderAvatar.textContent = user.username.charAt(0).toUpperCase();
+        chatHeaderName.textContent = user.username;
+
+        chatWelcome.hidden = true;
+        chatBox.hidden = false;
+
+        // TODO (backend): load this conversation's message history,
+        // e.g. fetch(`/api/conversations/${user.id}/messages/`)
     }
 });

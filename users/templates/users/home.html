@@ -30,9 +30,27 @@
     </aside>
 
     <section class="chat-panel">
-        <div class="welcome">
+        <div class="welcome" id="chat-welcome">
             <h1>Welcome back, {{ user.first_name|default:user.username }}</h1>
             <p>Select a conversation from the left to start chatting, or search for someone new.</p>
+        </div>
+
+        <div class="chat-box" id="chat-box" hidden>
+            <div class="chat-header">
+                <div class="avatar" id="chat-header-avatar"></div>
+                <span class="chat-header-name" id="chat-header-name"></span>
+            </div>
+
+            <div class="chat-messages" id="chat-messages">
+                {# TODO (backend): render this conversation's messages here #}
+                <div class="chat-messages-empty">No messages yet. Say hello!</div>
+            </div>
+
+            <form class="chat-input-form" id="chat-input-form">
+                <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+                <button type="submit" class="btn btn-primary">Send</button>
+                {# TODO (backend): POST the message and push it via the WebSocket #}
+            </form>
         </div>
     </section>
 </div>
