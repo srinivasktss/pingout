@@ -1,24 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Register</title>
-</head>
-<body>
-    <h1>Create an account</h1>
+{% extends "users/base.html" %}
 
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+{% block title %}Register · Pingout{% endblock %}
+
+{% block content %}
+<div class="auth-form">
+    <h1>Create an account</h1>
 
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
+
+        {{ form.non_field_errors }}
+
+        {% for field in form %}
+            <p>
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+            </p>
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary">Register</button>
     </form>
-</body>
-</html>
+
+    <p class="auth-switch">
+        Already have an account? <a href="{% url 'users:login' %}">Login</a>
+    </p>
+</div>
+{% endblock %}

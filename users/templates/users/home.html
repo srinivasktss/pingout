@@ -1,0 +1,43 @@
+{% extends "users/base.html" %}
+{% load static %}
+
+{% block title %}Home · Pingout{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <aside class="conversation-list">
+        <h2>Conversations</h2>
+
+        <div class="conversation-items">
+            {# TODO (backend): loop over the user's conversations and render an item per conversation #}
+            {# Example markup for a single item: #}
+            {#
+            <a href="#" class="conversation-item">
+                <div class="avatar">U</div>
+                <div class="conversation-info">
+                    <span class="conversation-name">username</span>
+                    <span class="conversation-preview">Last message preview...</span>
+                </div>
+                <span class="unread-badge">2</span>
+            </a>
+            #}
+        </div>
+
+        <div class="empty-state" id="conversations-empty">
+            <p>No conversations yet.</p>
+            <p>Search for a user above to start chatting.</p>
+        </div>
+    </aside>
+
+    <section class="chat-panel">
+        <div class="welcome">
+            <h1>Welcome back, {{ user.first_name|default:user.username }}</h1>
+            <p>Select a conversation from the left to start chatting, or search for someone new.</p>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'users/js/home.js' %}"></script>
+{% endblock %}
