@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.Pingout.currentUsername = currentUsername;
     window.Pingout.currentChatUser = null;
     window.Pingout.appendMessage = appendMessage;
+    window.Pingout.openChat = openChat;
 
     if (!searchInput || !resultsBox) {
         return;

@@ -21,9 +21,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (belongsToOpenChat && window.Pingout.appendMessage) {
                     window.Pingout.appendMessage(data);
-                } else {
-                    // TODO: update the conversation list / unread badge for
-                    // a conversation that isn't currently open.
+                } else if (data.to === window.Pingout.currentUsername && window.Pingout.openChat) {
+                    // A message for us from someone we're not currently
+                    // viewing — switch the centre panel to that
+                    // conversation. (Single-conversation view for now;
+                    // a conversation list with unread badges can replace
+                    // this later.)
+                    window.Pingout.openChat({ username: data.from });
+                    window.Pingout.appendMessage(data);
                 }
                 break;
             }
