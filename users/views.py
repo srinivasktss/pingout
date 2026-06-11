@@ -55,6 +55,9 @@ class HomeView(View):
         return render(request, self.template_name)
     
 class LogoutView(View):
+
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         logout(request)
         messages.success(request, "You have logged out successfully.")
