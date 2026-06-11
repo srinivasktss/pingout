@@ -63,6 +63,7 @@ class MainConsumer(AsyncWebsocketConsumer):
         message = event['message']
 
         await self.send(text_data=json.dumps({
+            'type': 'new_message',
             'from': from_user,
             'to': to_user,
             'message': message
