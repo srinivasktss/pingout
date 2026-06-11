@@ -377,6 +377,29 @@ a {
     text-align: center;
 }
 
+.chat-message {
+    max-width: 70%;
+    padding: 0.5rem 0.85rem;
+    border-radius: 0.9rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.chat-message.sent {
+    align-self: flex-end;
+    background: var(--color-primary);
+    color: #fff;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.chat-message.received {
+    align-self: flex-start;
+    background: var(--color-bg);
+    color: var(--color-text);
+    border-bottom-left-radius: 0.25rem;
+}
+
 .chat-input-form {
     display: flex;
     gap: 0.5rem;

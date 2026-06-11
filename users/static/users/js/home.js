@@ -5,6 +5,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatBox = document.getElementById("chat-box");
     const chatHeaderAvatar = document.getElementById("chat-header-avatar");
     const chatHeaderName = document.getElementById("chat-header-name");
+    const chatMessages = document.getElementById("chat-messages");
+    const chatInputForm = document.getElementById("chat-input-form");
+    const chatInput = document.getElementById("chat-input");
+
+    const currentUsername = document.body.dataset.username;
+
+    window.Pingout = window.Pingout || {};
+    window.Pingout.currentUsername = currentUsername;
+    window.Pingout.currentChatUser = null;
+    window.Pingout.appendMessage = appendMessage;
 
     if (!searchInput || !resultsBox) {
         return;
@@ -86,13 +96,60 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        window.Pingout.currentChatUser = user;
+
         chatHeaderAvatar.textContent = user.username.charAt(0).toUpperCase();
         chatHeaderName.textContent = user.username;
 
         chatWelcome.hidden = true;
         chatBox.hidden = false;
 
+        chatMessages.innerHTML = "";
+        const empty = document.createElement("div");
+        empty.className = "chat-messages-empty";
+        empty.textContent = "No messages yet. Say hello!";
+        chatMessages.appendChild(empty);
+
         // TODO (backend): load this conversation's message history,
         // e.g. fetch(`/api/conversations/${user.id}/messages/`)
+    }
+
+    function appendMessage({ from, message }) {
+        if (!chatMessages) {
+            return;
+        }
+
+        const placeholder = chatMessages.querySelector(".chat-messages-empty");
+        if (placeholder) {
+            placeholder.remove();
+        }
+
+        const bubble = document.createElement("div");
+        bubble.className = "chat-message" + (from === currentUsername ? " sent" : " received");
+        bubble.textContent = message;
+
+        chatMessages.appendChild(bubble);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    if (chatInputForm) {
+        chatInputForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            const message = chatInput.value.trim();
+            const recipient = window.Pingout.currentChatUser;
+
+            if (!message || !recipient || !window.chatSocket) {
+                return;
+            }
+
+            window.chatSocket.send(JSON.stringify({
+                from: currentUsername,
+                to: recipient.username,
+                message: message,
+            }));
+
+            chatInput.value = "";
+        });
     }
 });

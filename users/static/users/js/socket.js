@@ -12,11 +12,21 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = JSON.parse(event.data);
 
         switch (data.type) {
-            case "new_message":
-                // TODO: append the message to #chat-messages if it belongs
-                // to the currently open conversation, otherwise update the
-                // conversation list / unread badge.
+            case "new_message": {
+                const currentChatUser = window.Pingout && window.Pingout.currentChatUser;
+                const belongsToOpenChat = currentChatUser && (
+                    data.from === currentChatUser.username ||
+                    data.to === currentChatUser.username
+                );
+
+                if (belongsToOpenChat && window.Pingout.appendMessage) {
+                    window.Pingout.appendMessage(data);
+                } else {
+                    // TODO: update the conversation list / unread badge for
+                    // a conversation that isn't currently open.
+                }
                 break;
+            }
 
             case "message_sent":
                 // TODO: confirm a message we sent was saved (e.g. swap a
