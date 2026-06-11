@@ -4,9 +4,16 @@ from django.shortcuts import redirect, render
 
 from .forms import UserRegisterForm, AuthenticationForm
 from django.views import View
-from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView as ApiView
+from rest_framework import status
 
+# Models
+from .models import User
+
+# Serializers
+from .serializers import UserSearchSerializer
 
 class RegisterView(View):
     form_class = UserRegisterForm
@@ -62,3 +69,23 @@ class LogoutView(View):
         logout(request)
         messages.success(request, "You have logged out successfully.")
         return redirect("users:login")
+    
+
+class UserSearchView(ApiView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query_params = request.query_params
+        search_query = query_params.get('q', '')
+        if search_query:
+            users = User.objects.filter(
+                username__icontains=search_query
+            ).exclude(
+                id=request.user.id
+            )
+        else:
+            users = User.objects.none()
+
+        serializer = UserSearchSerializer(users, many=True)
+        return JsonResponse(serializer.data, safe=False, status=status.HTTP_200_OK)
+        

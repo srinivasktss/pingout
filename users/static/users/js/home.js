@@ -6,54 +6,70 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    let debounceTimer;
-
-    searchInput.addEventListener("input", () => {
-        const query = searchInput.value.trim();
-
-        clearTimeout(debounceTimer);
-
-        if (!query) {
-            resultsBox.classList.remove("is-visible");
-            resultsBox.innerHTML = "";
+    searchInput.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") {
             return;
         }
 
-        debounceTimer = setTimeout(() => {
-            // TODO (backend): replace with a real search endpoint, e.g.
-            // fetch(`/users/search/?q=${encodeURIComponent(query)}`)
-            //   .then((res) => res.json())
-            //   .then((users) => renderResults(users));
-        }, 300);
+        event.preventDefault();
+
+        const query = searchInput.value.trim();
+
+        if (!query) {
+            hideResults();
+            return;
+        }
+
+        searchUsers(query);
     });
 
     document.addEventListener("click", (event) => {
         if (!resultsBox.contains(event.target) && event.target !== searchInput) {
-            resultsBox.classList.remove("is-visible");
+            hideResults();
         }
     });
+
+    function searchUsers(query) {
+        fetch(`/api/users/search?q=${encodeURIComponent(query)}`)
+            .then((response) => response.json())
+            .then((users) => renderResults(users))
+            .catch(() => renderResults([]));
+    }
 
     function renderResults(users) {
         resultsBox.innerHTML = "";
 
         if (!users.length) {
-            resultsBox.classList.remove("is-visible");
+            const empty = document.createElement("div");
+            empty.className = "search-no-results";
+            empty.textContent = "No user found.";
+            resultsBox.appendChild(empty);
+            resultsBox.classList.add("is-visible");
             return;
         }
 
         users.forEach((user) => {
-            const item = document.createElement("a");
-            item.href = `/chat/${user.id}/`;
-            item.className = "conversation-item";
-            item.innerHTML = `
-                <div class="avatar">${user.username.charAt(0).toUpperCase()}</div>
-                <div class="conversation-info">
-                    <span class="conversation-name">${user.username}</span>
-                </div>
-            `;
+            const item = document.createElement("div");
+            item.className = "search-result-item";
+
+            const avatar = document.createElement("div");
+            avatar.className = "avatar";
+            avatar.textContent = user.username.charAt(0).toUpperCase();
+
+            const name = document.createElement("span");
+            name.className = "conversation-name";
+            name.textContent = user.username;
+
+            item.appendChild(avatar);
+            item.appendChild(name);
             resultsBox.appendChild(item);
         });
 
         resultsBox.classList.add("is-visible");
+    }
+
+    function hideResults() {
+        resultsBox.classList.remove("is-visible");
+        resultsBox.innerHTML = "";
     }
 });

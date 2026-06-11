@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # local
     "users",
     "chat",
+    'api',
 ]
 
 MIDDLEWARE = [
