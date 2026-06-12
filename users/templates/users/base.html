@@ -19,7 +19,7 @@
 
         <div class="navbar-user">
             <span class="username">{{ user.username }}</span>
-            <a href="{% url 'users:logout' %}" class="btn btn-ghost">Logout</a>
+            <a href="{% url 'users:logout' %}" id="logout-link" class="btn btn-ghost">Logout</a>
         </div>
     </header>
     {% endif %}

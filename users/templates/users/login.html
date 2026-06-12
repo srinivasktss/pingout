@@ -1,4 +1,5 @@
 {% extends "users/base.html" %}
+{% load static %}
 
 {% block title %}Login · Pingout{% endblock %}
 
@@ -6,9 +7,22 @@
 <div class="auth-form">
     <h1>Welcome back</h1>
 
-    <form method="post">
+    <ul id="login-errors" class="errorlist" hidden>
+        <li id="login-error-message"></li>
+    </ul>
+
+    <form id="login-form" method="post" data-redirect-url="{% url 'users:home' %}">
         {% csrf_token %}
-        {{ form.as_p }}
+
+        <p>
+            <label for="id_username">Username</label>
+            <input type="text" name="username" id="id_username" required>
+        </p>
+        <p>
+            <label for="id_password">Password</label>
+            <input type="password" name="password" id="id_password" required>
+        </p>
+
         <button type="submit" class="btn btn-primary">Login</button>
     </form>
 
@@ -16,4 +30,8 @@
         Don't have an account? <a href="{% url 'users:register' %}">Register</a>
     </p>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'users/js/login.js' %}"></script>
 {% endblock %}

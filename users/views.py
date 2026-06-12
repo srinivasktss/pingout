@@ -6,7 +6,7 @@ from .forms import UserRegisterForm, AuthenticationForm
 from django.views import View
 from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView as ApiView
+from rest_framework.views import APIView
 from rest_framework import status
 
 # Models
@@ -15,7 +15,7 @@ from .models import User
 # Serializers
 from .serializers import UserSearchSerializer
 
-class RegisterView(View):
+class RegisterView(APIView):
     form_class = UserRegisterForm
     initial_data = {}
     template_name = 'users/register.html'
@@ -25,15 +25,23 @@ class RegisterView(View):
         return render(request, self.template_name, {'form': form})
     
     def post(self, request):
-        form = self.form_class(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, "Your account has been created successfully.")
-            return redirect("users:login")
-        return render(request, self.template_name, {'form': form})
+        data = request.data
+        
+        form = self.form_class(data)
 
-class LoginView(View):
+        if not form.is_valid():
+            first_field = next(iter(form.errors))
+            first_error = form.errors[first_field][0]
+            return JsonResponse({'details': first_error}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = form.save()
+
+        login(request, user)
+
+        return JsonResponse({'detail': 'Registration successful'}, status=status.HTTP_201_CREATED)
+
+
+class LoginView(APIView):
 
     form_class = AuthenticationForm
     initial_data = {}
@@ -45,13 +53,17 @@ class LoginView(View):
         return render(request, self.template_name, {'form': form})
     
     def post(self, request):
-        form = self.form_class(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            messages.success(request, "You have logged in successfully.")
-            return redirect("users:home")
-        return render(request, self.template_name, {'form': form})
+        data = request.data
+        form = self.form_class(request, data=data)
+        if not form.is_valid():
+            first_field = next(iter(form.errors))
+            first_error = form.errors[first_field][0]
+            return JsonResponse({'detail': first_error}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = form.get_user()
+        login(request, user)
+        
+        return JsonResponse({'detail': 'Login successful'}, status=status.HTTP_200_OK)
     
 
 class HomeView(View):
@@ -71,7 +83,7 @@ class LogoutView(View):
         return redirect("users:login")
     
 
-class UserSearchView(ApiView):
+class UserSearchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
