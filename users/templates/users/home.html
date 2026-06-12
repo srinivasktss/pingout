@@ -4,6 +4,7 @@
 {% block title %}Home · Pingout{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="dashboard">
     <aside class="conversation-list">
         <h2>Conversations</h2>
