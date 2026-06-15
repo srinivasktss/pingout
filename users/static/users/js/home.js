@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.Pingout = window.Pingout || {};
     window.Pingout.currentUsername = currentUsername;
     window.Pingout.currentChatUser = null;
+    window.Pingout.currentConversationId = null;
     window.Pingout.appendMessage = appendMessage;
     window.Pingout.openChat = openChat;
 
@@ -94,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
         resultsBox.innerHTML = "";
     }
 
-    function openChat(user) {
+    function openChat(user, conversationId = null) {
         hideResults();
         searchInput.value = "";
 
@@ -103,6 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         window.Pingout.currentChatUser = user;
+        window.Pingout.currentConversationId = conversationId;
 
         chatHeaderAvatar.textContent = user.username.charAt(0).toUpperCase();
         chatHeaderName.textContent = user.username;
@@ -135,7 +137,12 @@ document.addEventListener("DOMContentLoaded", () => {
             body: JSON.stringify({ user_id: user.id }),
         })
             .then((response) => response.json())
-            .then((conversation) => addConversationToList(conversation, user))
+            .then((conversation) => {
+                if (window.Pingout.currentChatUser && window.Pingout.currentChatUser.id === user.id) {
+                    window.Pingout.currentConversationId = conversation.id;
+                }
+                addConversationToList(conversation, user);
+            })
             .catch(() => {});
     }
 
@@ -185,7 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         item.addEventListener("click", (event) => {
             event.preventDefault();
-            openChat(user);
+            openChat(user, conversation && conversation.id);
         });
 
         conversationItems.prepend(item);
@@ -226,16 +233,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const message = chatInput.value.trim();
             const recipient = window.Pingout.currentChatUser;
+            const conversationId = window.Pingout.currentConversationId;
 
-            if (!message || !recipient || !window.chatSocket) {
+            if (!message || !recipient || !conversationId) {
                 return;
             }
 
-            window.chatSocket.send(JSON.stringify({
-                from: currentUsername,
-                to: recipient.username,
-                message: message,
-            }));
+            fetch("/api/message", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken(),
+                },
+                body: JSON.stringify({ conversation_id: conversationId, content: message }),
+            }).catch(() => {});
 
             chatInput.value = "";
         });

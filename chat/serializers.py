@@ -13,3 +13,7 @@ class GetConversationSerializer(serializers.Serializer):
         for participant in obj.participants.all():
             if participant.id != user.id:
                 return participant.username
+            
+class SendMessageSerializer(serializers.Serializer):
+    conversation_id = serializers.UUIDField()
+    content = serializers.CharField()

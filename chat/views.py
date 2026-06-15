@@ -4,10 +4,14 @@ from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
 
 # Models
-from .models import Conversation
+from .models import (
+    Conversation, Message
+)
 
 # Serializers
-from .serializers import GetConversationSerializer
+from .serializers import (
+    GetConversationSerializer, SendMessageSerializer
+)
 
 class GetConversationView(APIView):
 
@@ -39,3 +43,33 @@ class GetConversationView(APIView):
         )
 
         return JsonResponse(serializers_data.data, status=status.HTTP_200_OK)
+    
+class SendMessageView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        req_data_serializer = SendMessageSerializer(data=data)
+
+        if not req_data_serializer.is_valid():
+            return JsonResponse({'detail': req_data_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = req_data_serializer.validated_data
+        try:
+            conversation = Conversation.objects.get(
+                id=validated_data['conversation_id'],
+                participants=request.user
+            )
+        except Conversation.DoesNotExist:
+            return JsonResponse({'detail': 'Conversation not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+
+        # Save to DB first
+        message = Message.objects.create(
+            conversation=Conversation.objects.get(id=validated_data['conversation_id']),
+            sender=request.user,
+            content=validated_data['content']
+        )
+
+        return JsonResponse({'detail': 'Message sent with'}, status=status.HTTP_200_OK)
