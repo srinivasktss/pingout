@@ -171,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const name = document.createElement("span");
         name.className = "conversation-name";
-        name.textContent = user.username;
+        name.textContent = (conversation && conversation.conversation_name) || user.username;
 
         const preview = document.createElement("span");
         preview.className = "conversation-preview";

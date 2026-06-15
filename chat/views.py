@@ -23,7 +23,7 @@ class GetConversationView(APIView):
         user_id = request.user.id
 
         # Check if both have already conversation
-        conversation = Conversation.objects.filter(
+        conversation = Conversation.objects.prefetch_related('participants').filter(
             participants=user_id
         ).filter(
             participants=other_user_id
@@ -33,6 +33,9 @@ class GetConversationView(APIView):
             conversation = Conversation.objects.create()
             conversation.participants.add(user_id, other_user_id)
 
-        serializers_data = GetConverstaionSerializer(conversation)
+        serializers_data = GetConverstaionSerializer(
+            conversation,
+            context={'request': request}
+        )
 
         return JsonResponse(serializers_data.data, status=status.HTTP_200_OK)
