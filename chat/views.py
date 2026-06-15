@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from .models import Conversation
 
 # Serializers
-from .serializers import GetConverstaionSerializer
+from .serializers import GetConversationSerializer
 
 class GetConversationView(APIView):
 
@@ -33,7 +33,7 @@ class GetConversationView(APIView):
             conversation = Conversation.objects.create()
             conversation.participants.add(user_id, other_user_id)
 
-        serializers_data = GetConverstaionSerializer(
+        serializers_data = GetConversationSerializer(
             conversation,
             context={'request': request}
         )

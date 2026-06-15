@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-class GetConverstaionSerializer(serializers.Serializer):
+class GetConversationSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     conversation_name = serializers.SerializerMethodField()
 

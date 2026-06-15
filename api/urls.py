@@ -5,5 +5,5 @@ from chat.views import GetConversationView
 
 urlpatterns = [
     path('users/search', UserSearchView.as_view(), name='user-search'),
-    path('conversations/', GetConversationView.as_view(), name='create-conversation')
+    path('conversation', GetConversationView.as_view(), name='create-conversation')
 ]

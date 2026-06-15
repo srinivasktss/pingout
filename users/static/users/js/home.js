@@ -126,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function startConversation(user) {
-        fetch("/api/conversations/", {
+        fetch("/api/conversation", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
