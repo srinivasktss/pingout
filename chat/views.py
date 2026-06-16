@@ -10,7 +10,8 @@ from .models import (
 
 # Serializers
 from .serializers import (
-    GetConversationSerializer, SendMessageSerializer
+    GetConversationSerializer, SendMessageSerializer, GetMessagesRequestSerializer,
+    GetMessagesResponseSerializer
 )
 
 class GetConversationView(APIView):
@@ -44,6 +45,26 @@ class GetConversationView(APIView):
 
         return JsonResponse(serializers_data.data, status=status.HTTP_200_OK)
     
+
+class GetConversationsView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        conversations = Conversation.objects.prefetch_related('participants').filter(
+            participants=user
+        )
+
+        serialized_convs = GetConversationSerializer(
+            conversations, 
+            context={'request': request}, 
+            many=True
+        )
+
+        return JsonResponse(serialized_convs.data, safe=False, status=status.HTTP_200_OK)
+    
 class SendMessageView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -67,9 +88,34 @@ class SendMessageView(APIView):
 
         # Save to DB first
         message = Message.objects.create(
-            conversation=Conversation.objects.get(id=validated_data['conversation_id']),
+            conversation=conversation,
             sender=request.user,
             content=validated_data['content']
         )
 
+        # Send Socket message
+
+
         return JsonResponse({'detail': 'Message sent with'}, status=status.HTTP_200_OK)
+
+class GetMessagesView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        req_serializer = GetMessagesRequestSerializer(data=request.query_params)
+        if not req_serializer.is_valid():
+            return JsonResponse({'details': req_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = req_serializer.validated_data
+
+        try:
+            conversation = Conversation.objects.get(
+                id=validated_data['conversation_id'],
+                participants=request.user
+            )
+        except Conversation.DoesNotExist:
+            return JsonResponse({'details': 'Invalid Conversation'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serialized_res = GetMessagesResponseSerializer(conversation)
+        return JsonResponse(serialized_res.data, status=status.HTTP_200_OK)

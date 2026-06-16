@@ -20,6 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.Pingout.appendMessage = appendMessage;
     window.Pingout.openChat = openChat;
 
+    loadConversations();
+
     if (!searchInput || !resultsBox) {
         return;
     }
@@ -113,13 +115,39 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.hidden = false;
 
         chatMessages.innerHTML = "";
-        const empty = document.createElement("div");
-        empty.className = "chat-messages-empty";
-        empty.textContent = "No messages yet. Say hello!";
-        chatMessages.appendChild(empty);
 
-        // TODO (backend): load this conversation's message history,
-        // e.g. fetch(`/api/conversations/${user.id}/messages/`)
+        if (conversationId) {
+            loadMessages(conversationId);
+        } else {
+            const empty = document.createElement("div");
+            empty.className = "chat-messages-empty";
+            empty.textContent = "No messages yet. Say hello!";
+            chatMessages.appendChild(empty);
+        }
+    }
+
+    function loadMessages(conversationId) {
+        fetch(`/api/messages?conversation_id=${encodeURIComponent(conversationId)}`)
+            .then((response) => response.json())
+            .then(({ participants, messages }) => {
+                chatMessages.innerHTML = "";
+
+                if (!messages || !messages.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "chat-messages-empty";
+                    empty.textContent = "No messages yet. Say hello!";
+                    chatMessages.appendChild(empty);
+                    return;
+                }
+
+                messages.forEach((msg) => {
+                    appendMessage({
+                        from: participants[String(msg.sender_id)],
+                        message: msg.content,
+                    });
+                });
+            })
+            .catch(() => {});
     }
 
     function getCsrfToken() {
@@ -144,6 +172,55 @@ document.addEventListener("DOMContentLoaded", () => {
                 addConversationToList(conversation, user);
             })
             .catch(() => {});
+    }
+
+    function loadConversations() {
+        fetch("/api/conversations")
+            .then((response) => response.json())
+            .then((conversations) => {
+                if (!Array.isArray(conversations) || !conversations.length) return;
+                if (conversationsEmpty) conversationsEmpty.hidden = true;
+                conversations.forEach((conversation) => renderConversationItem(conversation));
+            })
+            .catch(() => {});
+    }
+
+    function renderConversationItem(conversation) {
+        const name = conversation.conversation_name;
+        if (!name || !conversationItems) return;
+
+        const item = document.createElement("a");
+        item.href = "#";
+        item.className = "conversation-item";
+        item.dataset.username = name;
+        item.dataset.conversationId = conversation.id;
+
+        const avatar = document.createElement("div");
+        avatar.className = "avatar";
+        avatar.textContent = name.charAt(0).toUpperCase();
+
+        const info = document.createElement("div");
+        info.className = "conversation-info";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "conversation-name";
+        nameSpan.textContent = name;
+
+        const preview = document.createElement("span");
+        preview.className = "conversation-preview";
+        preview.textContent = "";
+
+        info.appendChild(nameSpan);
+        info.appendChild(preview);
+        item.appendChild(avatar);
+        item.appendChild(info);
+
+        item.addEventListener("click", (event) => {
+            event.preventDefault();
+            openChat({ username: name }, conversation.id);
+        });
+
+        conversationItems.appendChild(item);
     }
 
     function addConversationToList(conversation, user) {
