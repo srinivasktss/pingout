@@ -11,6 +11,7 @@ class MessageSerializer(serializers.ModelSerializer):
 class GetConversationSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     conversation_name = serializers.SerializerMethodField()
+    unread_msg_count = serializers.IntegerField()
 
     def get_conversation_name(self, obj):
         request = self.context.get('request')

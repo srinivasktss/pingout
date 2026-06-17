@@ -222,6 +222,8 @@ document.addEventListener("DOMContentLoaded", () => {
         item.appendChild(avatar);
         item.appendChild(info);
 
+        setUnreadBadge(item, conversation.unread_msg_count || 0);
+
         item.addEventListener("click", (event) => {
             event.preventDefault();
             openChat({ username: name }, conversation.id);
@@ -293,6 +295,22 @@ document.addEventListener("DOMContentLoaded", () => {
         item.classList.add("active");
     }
 
+    function setUnreadBadge(item, count) {
+        item.dataset.unreadCount = String(count);
+
+        let badge = item.querySelector(".unread-badge");
+        if (count > 0) {
+            if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "unread-badge";
+                item.appendChild(badge);
+            }
+            badge.textContent = String(count);
+        } else if (badge) {
+            badge.remove();
+        }
+    }
+
     function incrementUnread(username) {
         if (!conversationItems) {
             return;
@@ -304,26 +322,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const count = parseInt(item.dataset.unreadCount || "0", 10) + 1;
-        item.dataset.unreadCount = String(count);
-
-        let badge = item.querySelector(".unread-badge");
-        if (!badge) {
-            badge = document.createElement("span");
-            badge.className = "unread-badge";
-            item.appendChild(badge);
-        }
-        badge.textContent = String(count);
+        setUnreadBadge(item, count);
     }
 
     function clearUnread(item) {
         if (!item) {
             return;
         }
-        item.dataset.unreadCount = "0";
-        const badge = item.querySelector(".unread-badge");
-        if (badge) {
-            badge.remove();
-        }
+        setUnreadBadge(item, 0);
     }
 
     function appendMessage({ from, message }) {

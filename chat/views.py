@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
 from django.conf import settings
+from django.db.models import Count, Q
 
 # Models
 from .models import (
@@ -61,7 +62,14 @@ class GetConversationsView(APIView):
     def get(self, request):
         user = request.user
 
-        conversations = Conversation.objects.prefetch_related('participants').filter(
+        conversations = Conversation.objects.prefetch_related(
+            'participants'
+        ).annotate(
+            unread_msg_count=Count(
+                'messages', 
+                filter=Q(messages__is_read=False) & ~Q(messages__sender=user)
+            )
+        ).filter(
             participants=user
         )
 
