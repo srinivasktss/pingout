@@ -2,10 +2,14 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
+from django.conf import settings
 
 # Models
 from .models import (
     Conversation, Message
+)
+from users.models import (
+    User
 )
 
 # Serializers
@@ -13,6 +17,10 @@ from .serializers import (
     GetConversationSerializer, SendMessageSerializer, GetMessagesRequestSerializer,
     GetMessagesResponseSerializer
 )
+
+# Sockets
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 class GetConversationView(APIView):
 
@@ -69,6 +77,8 @@ class SendMessageView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    channel_layer = get_channel_layer()
+
     def post(self, request):
         data = request.data
         req_data_serializer = SendMessageSerializer(data=data)
@@ -76,15 +86,20 @@ class SendMessageView(APIView):
         if not req_data_serializer.is_valid():
             return JsonResponse({'detail': req_data_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
+        sender = request.user
         validated_data = req_data_serializer.validated_data
         try:
             conversation = Conversation.objects.get(
                 id=validated_data['conversation_id'],
-                participants=request.user
+                participants=sender
             )
         except Conversation.DoesNotExist:
             return JsonResponse({'detail': 'Conversation not found'}, status=status.HTTP_404_NOT_FOUND)
         
+        try:
+            recipient = conversation.participants.exclude(id=sender.id).get()
+        except User.DoesNotExist:
+            return JsonResponse({'details': 'Recipient not exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Save to DB first
         message = Message.objects.create(
@@ -94,6 +109,29 @@ class SendMessageView(APIView):
         )
 
         # Send Socket message
+        # Send to recipient
+        async_to_sync(self.channel_layer.group_send)(
+            f'user_{recipient.id}',
+            {
+                'type': 'new_message',
+                'conversation_id': str(conversation.id),
+                'from_user': sender.username,
+                'to_user': recipient.username,
+                'message': message.content
+            }
+        )
+
+        # Echo to sender
+        async_to_sync(self.channel_layer.group_send)(
+            f'user_{sender.id}',
+            {
+                'type': 'new_message',
+                'conversation_id': str(conversation.id),
+                'from_user': sender.username,
+                'to_user': recipient.username,
+                'message': message.content
+            }
+        )
 
 
         return JsonResponse({'detail': 'Message sent with'}, status=status.HTTP_200_OK)

@@ -14,21 +14,14 @@ document.addEventListener("DOMContentLoaded", () => {
         switch (data.type) {
             case "new_message": {
                 const currentChatUser = window.Pingout && window.Pingout.currentChatUser;
-                const belongsToOpenChat = currentChatUser && (
-                    data.from === currentChatUser.username ||
-                    data.to === currentChatUser.username
-                );
+                const isOwnMessage = data.from === window.Pingout.currentUsername;
+                const otherUsername = isOwnMessage ? data.to : data.from;
+                const belongsToOpenChat = currentChatUser && currentChatUser.username === otherUsername;
 
                 if (belongsToOpenChat && window.Pingout.appendMessage) {
                     window.Pingout.appendMessage(data);
-                } else if (data.to === window.Pingout.currentUsername && window.Pingout.openChat) {
-                    // A message for us from someone we're not currently
-                    // viewing — switch the centre panel to that
-                    // conversation. (Single-conversation view for now;
-                    // a conversation list with unread badges can replace
-                    // this later.)
-                    window.Pingout.openChat({ username: data.from });
-                    window.Pingout.appendMessage(data);
+                } else if (!isOwnMessage && window.Pingout.incrementUnread) {
+                    window.Pingout.incrementUnread(otherUsername);
                 }
                 break;
             }

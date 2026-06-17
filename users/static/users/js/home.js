@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     window.Pingout.currentConversationId = null;
     window.Pingout.appendMessage = appendMessage;
     window.Pingout.openChat = openChat;
+    window.Pingout.incrementUnread = incrementUnread;
 
     loadConversations();
 
@@ -107,6 +108,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         window.Pingout.currentChatUser = user;
         window.Pingout.currentConversationId = conversationId;
+
+        const item = conversationItems && conversationItems.querySelector(`[data-username="${user.username}"]`);
+        if (item) {
+            setActiveConversation(item);
+            clearUnread(item);
+        }
 
         chatHeaderAvatar.textContent = user.username.charAt(0).toUpperCase();
         chatHeaderName.textContent = user.username;
@@ -284,6 +291,39 @@ document.addEventListener("DOMContentLoaded", () => {
             el.classList.remove("active");
         });
         item.classList.add("active");
+    }
+
+    function incrementUnread(username) {
+        if (!conversationItems) {
+            return;
+        }
+
+        const item = conversationItems.querySelector(`[data-username="${username}"]`);
+        if (!item) {
+            return;
+        }
+
+        const count = parseInt(item.dataset.unreadCount || "0", 10) + 1;
+        item.dataset.unreadCount = String(count);
+
+        let badge = item.querySelector(".unread-badge");
+        if (!badge) {
+            badge = document.createElement("span");
+            badge.className = "unread-badge";
+            item.appendChild(badge);
+        }
+        badge.textContent = String(count);
+    }
+
+    function clearUnread(item) {
+        if (!item) {
+            return;
+        }
+        item.dataset.unreadCount = "0";
+        const badge = item.querySelector(".unread-badge");
+        if (badge) {
+            badge.remove();
+        }
     }
 
     function appendMessage({ from, message }) {
