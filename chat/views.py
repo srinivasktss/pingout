@@ -19,6 +19,11 @@ from .serializers import (
     GetMessagesResponseSerializer
 )
 
+# Utils
+from .utils import (
+    mark_as_read
+)
+
 # Sockets
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -165,3 +170,42 @@ class GetMessagesView(APIView):
 
         serialized_res = GetMessagesResponseSerializer(conversation)
         return JsonResponse(serialized_res.data, status=status.HTTP_200_OK)
+    
+
+class MarkAsReadView(APIView):
+
+    permission_classes = [IsAuthenticated]
+    channel_layer = get_channel_layer()
+
+    def patch(self, request, conversation_id):
+        req_serializer = GetMessagesRequestSerializer(data={'conversation_id': conversation_id})
+        if not req_serializer.is_valid():
+            return JsonResponse({'details': req_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        mark_as_read(conversation_id, request.user)
+
+        recipient_user = request.user
+        validated_data = req_serializer.validated_data
+        try:
+            # Now Send Socket message which tell as read
+            conversation = Conversation.objects.prefetch_related(
+                'participants'
+            ).get(
+                id=validated_data['conversation_id'],
+                participants=recipient_user
+            )
+        except Conversation.DoesNotExist:
+            return JsonResponse({'details': 'Invalid Conversation'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Send read in linve
+        sender_user = conversation.participants.exclude(id=recipient_user.id).get()
+        async_to_sync(self.channel_layer.group_send)(
+            f'user_{sender_user.id}',
+            {
+                'type': 'mark_as_read',
+                'conversation_id': str(conversation.id),
+            }
+        )
+
+
+        return JsonResponse({'detail': 'Updated Successfully'}, status=status.HTTP_200_OK)

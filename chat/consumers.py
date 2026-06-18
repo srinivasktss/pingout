@@ -33,3 +33,9 @@ class MainConsumer(AsyncWebsocketConsumer):
             'to': event['to_user'],
             'message': event['message']
         }))
+
+    async def mark_as_read(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'mark_as_read',
+            'conversation_id': event['conversation_id'],
+        }))

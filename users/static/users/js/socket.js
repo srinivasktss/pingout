@@ -20,6 +20,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (belongsToOpenChat && window.Pingout.appendMessage) {
                     window.Pingout.appendMessage(data);
+                    if (!isOwnMessage && window.Pingout.markAsRead) {
+                        window.Pingout.markAsRead(data.conversation_id);
+                    }
                 } else if (!isOwnMessage && window.Pingout.incrementUnread) {
                     window.Pingout.incrementUnread(otherUsername);
                 }
@@ -34,6 +37,14 @@ document.addEventListener("DOMContentLoaded", () => {
             case "presence":
                 // TODO: update online/offline indicator for data.user_id.
                 break;
+
+            case "mark_as_read": {
+                const isOpenConversation = data.conversation_id === window.Pingout.currentConversationId;
+                if (isOpenConversation && window.Pingout.markMessagesRead) {
+                    window.Pingout.markMessagesRead();
+                }
+                break;
+            }
 
             case "unread_count":
                 // TODO: update the unread badge for a conversation.

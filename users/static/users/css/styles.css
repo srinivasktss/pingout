@@ -405,6 +405,17 @@ a {
     border-bottom-left-radius: 0.25rem;
 }
 
+.chat-message-status {
+    margin-left: 0.35rem;
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.chat-message-status.read {
+    opacity: 1;
+    color: #34b7f1;
+}
+
 .chat-input-form {
     display: flex;
     gap: 0.5rem;

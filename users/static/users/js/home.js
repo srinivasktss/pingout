@@ -20,6 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.Pingout.appendMessage = appendMessage;
     window.Pingout.openChat = openChat;
     window.Pingout.incrementUnread = incrementUnread;
+    window.Pingout.markMessagesRead = markMessagesRead;
+    window.Pingout.markAsRead = markAsRead;
 
     loadConversations();
 
@@ -106,6 +108,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        const isAlreadyOpen = window.Pingout.currentConversationId === conversationId
+            && window.Pingout.currentChatUser
+            && window.Pingout.currentChatUser.username === user.username;
+
         window.Pingout.currentChatUser = user;
         window.Pingout.currentConversationId = conversationId;
 
@@ -125,6 +131,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (conversationId) {
             loadMessages(conversationId);
+            if (!isAlreadyOpen) {
+                markAsRead(conversationId);
+            }
         } else {
             const empty = document.createElement("div");
             empty.className = "chat-messages-empty";
@@ -151,10 +160,31 @@ document.addEventListener("DOMContentLoaded", () => {
                     appendMessage({
                         from: participants[String(msg.sender_id)],
                         message: msg.content,
+                        id: msg.id,
+                        isRead: msg.is_read,
                     });
                 });
             })
             .catch(() => {});
+    }
+
+    function markAsRead(conversationId) {
+        fetch(`/api/read/${encodeURIComponent(conversationId)}`, {
+            method: "PATCH",
+            headers: {
+                "X-CSRFToken": getCsrfToken(),
+            },
+        }).catch(() => {});
+    }
+
+    function markMessagesRead() {
+        if (!chatMessages) {
+            return;
+        }
+        chatMessages.querySelectorAll(".chat-message.sent .chat-message-status").forEach((tick) => {
+            tick.textContent = "✓✓";
+            tick.classList.add("read");
+        });
     }
 
     function getCsrfToken() {
@@ -332,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setUnreadBadge(item, 0);
     }
 
-    function appendMessage({ from, message }) {
+    function appendMessage({ from, message, id, isRead }) {
         if (!chatMessages) {
             return;
         }
@@ -342,9 +372,25 @@ document.addEventListener("DOMContentLoaded", () => {
             placeholder.remove();
         }
 
+        const isSent = from === currentUsername;
+
         const bubble = document.createElement("div");
-        bubble.className = "chat-message" + (from === currentUsername ? " sent" : " received");
-        bubble.textContent = message;
+        bubble.className = "chat-message" + (isSent ? " sent" : " received");
+        if (id !== undefined && id !== null) {
+            bubble.dataset.messageId = id;
+        }
+
+        const text = document.createElement("span");
+        text.className = "chat-message-text";
+        text.textContent = message;
+        bubble.appendChild(text);
+
+        if (isSent) {
+            const tick = document.createElement("span");
+            tick.className = "chat-message-status" + (isRead ? " read" : "");
+            tick.textContent = isRead ? "✓✓" : "✓";
+            bubble.appendChild(tick);
+        }
 
         chatMessages.appendChild(bubble);
         chatMessages.scrollTop = chatMessages.scrollHeight;
